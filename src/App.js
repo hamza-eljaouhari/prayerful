@@ -68,7 +68,7 @@ function App() {
 
     const fetchPrayers = async () => {
         try {
-            const response = await axios.get('https://freepdflibrary.com/list-prayers/list-prayers');
+            const response = await axios.get('https://freepdflibrary.com/list-prayers');
             setPrayers(response.data.prayers);
         } catch (error) {
             console.error('Error fetching prayers:', error);
@@ -78,7 +78,7 @@ function App() {
     const generatePrayer = async () => {
         setLoading(true);
         try {
-            const response = await axios.post('https://freepdflibrary.com/list-prayersgenerate-prayer', { topic, writer, language });
+            const response = await axios.post('https://freepdflibrary.com/generate-prayer', { topic, writer, language });
             setPrayer(response.data.prayer);
             setAudioUrl(response.data.audioUrl);
             setTextUrl(response.data.textUrl);
