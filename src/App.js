@@ -68,7 +68,7 @@ function App() {
 
     const fetchPrayers = async () => {
         try {
-            const response = await axios.get('http://ec2-35-180-42-31.eu-west-3.compute.amazonaws.com//list-prayers');
+            const response = await axios.get('http://ec2-35-180-42-31.eu-west-3.compute.amazonaws.com/list-prayers');
             setPrayers(response.data.prayers);
         } catch (error) {
             console.error('Error fetching prayers:', error);
@@ -78,7 +78,7 @@ function App() {
     const generatePrayer = async () => {
         setLoading(true);
         try {
-            const response = await axios.post('http://ec2-35-180-42-31.eu-west-3.compute.amazonaws.com//generate-prayer', { topic, writer, language });
+            const response = await axios.post('http://ec2-35-180-42-31.eu-west-3.compute.amazonaws.com/generate-prayer', { topic, writer, language });
             setPrayer(response.data.prayer);
             setAudioUrl(response.data.audioUrl);
             setTextUrl(response.data.textUrl);
