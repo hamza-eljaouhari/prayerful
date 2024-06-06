@@ -116,7 +116,7 @@ function App() {
     };
 
     const filteredPrayers = filterLanguage
-        ? prayers.filter(prayer => prayer.language === filterLanguage)
+        ? prayers.filter(prayer => prayer.textUrl.toLowerCase().includes(filterLanguage.toLowerCase()))
         : prayers;
 
     return (
