@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import './App.css';
-import https from 'https';
 
 const topics = [
     "gratitude", "forgiveness", "healing", "strength", "protection",
@@ -69,11 +68,8 @@ function App() {
 
     const fetchPrayers = async () => {
         try {
-          const agent = new https.Agent({ rejectUnauthorized: false });
-          const response = await axios.get('http://ec2-35-180-42-31.eu-west-3.compute.amazonaws.com/list-prayers', {
-              httpsAgent: agent,
-          });
-          setPrayers(response.data.prayers);
+            const response = await axios.get('https://freepdflibrary.com/list-prayers/list-prayers');
+            setPrayers(response.data.prayers);
         } catch (error) {
             console.error('Error fetching prayers:', error);
         }
@@ -82,11 +78,8 @@ function App() {
     const generatePrayer = async () => {
         setLoading(true);
         try {
-          const agent = new https.Agent({ rejectUnauthorized: false });
-          const response = await axios.post('http://ec2-35-180-42-31.eu-west-3.compute.amazonaws.com/generate-prayer', { topic, writer, language }, {
-              httpsAgent: agent,
-          });
-          setPrayer(response.data.prayer);
+            const response = await axios.post('https://freepdflibrary.com/list-prayersgenerate-prayer', { topic, writer, language });
+            setPrayer(response.data.prayer);
             setAudioUrl(response.data.audioUrl);
             setTextUrl(response.data.textUrl);
             fetchPrayers(); // Refresh the list after generating a new prayer
