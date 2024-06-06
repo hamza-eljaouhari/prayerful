@@ -3,49 +3,6 @@ import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import './App.css';
 
-const topics = [
-    "gratitude", "forgiveness", "healing", "strength", "protection",
-    "guidance", "peace", "love", "compassion", "courage",
-    "wisdom", "patience", "faith", "hope", "charity", "kindness",
-    "understanding", "reconciliation", "unity", "humility",
-    "mercy", "justice", "truth", "joy", "grace", "devotion",
-    "reverence", "redemption", "salvation", "praise", "thanksgiving",
-    "intercession", "confession", "consecration", "dedication",
-    "adoration", "benediction", "petition", "supplication",
-    "lamentation", "meditation", "reflection", "renewal",
-    "revival", "restoration", "sanctification", "deliverance",
-    "enlightenment", "faithfulness", "fidelity", "sincerity",
-    "sobriety", "chastity", "simplicity", "stewardship", "evangelism",
-    "discipleship", "servanthood", "mission", "vocation", "ministry",
-    "fellowship", "community", "family", "marriage", "parenting",
-    "friendship", "work", "school", "learning", "teaching", "growth",
-    "maturity", "perseverance", "endurance", "provision", "safety",
-    "peacekeeping", "defense", "healing of nations", "environment",
-    "creation", "animal welfare", "agriculture", "science",
-    "technology", "arts", "literature", "music", "sports", "leisure",
-    "health", "mental health", "well-being", "prosperity", "wealth",
-    "poverty", "equality", "freedom", "human rights", "democracy",
-    "government", "leadership"
-];
-
-const writers = [
-    "William Shakespeare", "Jane Austen", "Charles Dickens", "Leo Tolstoy", "Mark Twain",
-    "Homer", "Edgar Allan Poe", "J.K. Rowling", "George Orwell", "Ernest Hemingway",
-    "Fyodor Dostoevsky", "Emily Dickinson", "Virginia Woolf", "James Joyce", "Gabriel Garcia Marquez",
-    "Franz Kafka", "F. Scott Fitzgerald", "Herman Melville", "T.S. Eliot", "John Steinbeck",
-    "Oscar Wilde", "Mary Shelley", "H.G. Wells", "George Eliot", "Thomas Hardy",
-    "Ralph Waldo Emerson", "Henry David Thoreau", "Walt Whitman", "Robert Frost", "Maya Angelou",
-    "Sylvia Plath", "Toni Morrison", "Harper Lee", "Kurt Vonnegut", "Ray Bradbury",
-    "J.R.R. Tolkien", "C.S. Lewis", "Isaac Asimov", "Arthur C. Clarke", "Philip K. Dick",
-    "Margaret Atwood", "Ursula K. Le Guin", "Aldous Huxley", "H.P. Lovecraft", "Agatha Christie",
-    "Arthur Conan Doyle", "J.D. Salinger", "Jack Kerouac", "Ernest J. Gaines", "Octavia E. Butler",
-    "Vladimir Nabokov", "E. E. Cummings", "D.H. Lawrence", "William Faulkner", "Tennessee Williams",
-    "L. Frank Baum", "Louisa May Alcott", "Jules Verne", "Robert Louis Stevenson", "Nathaniel Hawthorne",
-    "Charles Baudelaire", "Marcel Proust", "Albert Camus", "Jean-Paul Sartre", "Simone de Beauvoir",
-    "Gabriel Garcia Marquez", "Isabel Allende", "Pablo Neruda", "Jorge Luis Borges", "Carlos Fuentes",
-    "Mario Vargas Llosa", "Miguel de Cervantes", "Edith Wharton", "Thomas Mann", "Herman Hesse"
-];
-
 const languages = {
     "english": "English",
     "french": "French",
@@ -53,9 +10,11 @@ const languages = {
 };
 
 function App() {
-    const [topic, setTopic] = useState(topics[0]);
-    const [writer, setWriter] = useState(writers[0]);
     const [language, setLanguage] = useState("english");
+    const [topics, setTopics] = useState([]);
+    const [writers, setWriters] = useState([]);
+    const [topic, setTopic] = useState("");
+    const [writer, setWriter] = useState("");
     const [prayer, setPrayer] = useState("");
     const [audioUrl, setAudioUrl] = useState("");
     const [textUrl, setTextUrl] = useState("");
@@ -65,12 +24,34 @@ function App() {
     const [expandedPrayers, setExpandedPrayers] = useState({});
 
     useEffect(() => {
+        fetchTopics();
+        fetchWriters();
         fetchPrayers();
-    }, []);
+    }, [language]);
+
+    const fetchTopics = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/topics', { params: { language } });
+            setTopics(response.data);
+            setTopic(response.data[0]);
+        } catch (error) {
+            console.error('Error fetching topics:', error);
+        }
+    };
+
+    const fetchWriters = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/writers', { params: { language } });
+            setWriters(response.data);
+            setWriter(response.data[0]);
+        } catch (error) {
+            console.error('Error fetching writers:', error);
+        }
+    };
 
     const fetchPrayers = async () => {
         try {
-            const response = await axios.get('https://freepdflibrary.com/list-prayers');
+            const response = await axios.get('http://localhost:5000/list-prayers');
             setPrayers(response.data.prayers);
         } catch (error) {
             console.error('Error fetching prayers:', error);
@@ -84,7 +65,7 @@ function App() {
         setTextUrl("");
 
         try {
-            const response = await axios.post('https://freepdflibrary.com/generate-prayer', { topic, writer, language });
+            const response = await axios.post('http://localhost:5000/generate-prayer', { topic, writer, language });
             setPrayer(response.data.prayer);
             setAudioUrl(response.data.audioUrl);
             setTextUrl(response.data.textUrl);
@@ -126,6 +107,18 @@ function App() {
                 <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-lg sm:p-20">
                     <h1 className="text-2xl font-bold mb-4">Prayer Generator</h1>
                     <div className="mb-4">
+                        <label className="block text-gray-700">Select Language:</label>
+                        <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                            className="block w-full mt-1 p-2 border rounded-md"
+                        >
+                            {Object.keys(languages).map((lang) => (
+                                <option key={lang} value={lang}>{languages[lang]}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="mb-4">
                         <label className="block text-gray-700">Select Topic:</label>
                         <select
                             value={topic}
@@ -146,18 +139,6 @@ function App() {
                         >
                             {writers.map((writer) => (
                                 <option key={writer} value={writer}>{writer}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700">Select Language:</label>
-                        <select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                            className="block w-full mt-1 p-2 border rounded-md"
-                        >
-                            {Object.keys(languages).map((lang) => (
-                                <option key={lang} value={lang}>{languages[lang]}</option>
                             ))}
                         </select>
                     </div>
@@ -219,7 +200,7 @@ function App() {
                                     <source src={prayer.audioUrl} type="audio/mp3" />
                                 </audio>
                                 <button
-                                    onClick={() => downloadPDF(prayer.text, `prayer-${index + 1}-${prayer.language}`)}
+                                    onClick={() => downloadPDF(prayer.text, `prayer-${index + 1}-${language}`)}
                                     className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-700 mt-2"
                                 >
                                     Download as PDF
