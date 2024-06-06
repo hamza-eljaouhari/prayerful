@@ -203,7 +203,7 @@ function App() {
                   </div>
                   <div className="mt-6">
                       <h2 className="text-lg font-bold mb-2">All Prayers:</h2>
-                      {filteredPrayers.map((prayer, index) => (
+                      {filteredPrayers.length > 0 && filteredPrayers.map((prayer, index) => (
                           <div key={index} className="mb-4 p-4 border rounded-md">
                               <p className="block mb-2">
                                   {expandedPrayers[index] ? prayer.text : getPrayerExcerpt(prayer.text)}
