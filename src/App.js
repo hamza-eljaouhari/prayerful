@@ -263,6 +263,7 @@ function App() {
                     >
                         {loading ? 'Generating...' : 'Generate Prayer'}
                     </button>
+                    <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
                     {prayer && (
                         <div className="mt-6">
                             <h2 className="text-lg font-bold mb-2">Prayer:</h2>
@@ -329,7 +330,6 @@ function App() {
                                     )}
                                 </div>
                             </div>
-                            <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
                             <div className="mb-4">
                                 {audioUrl && (
                                     <audio controls className="w-full">
