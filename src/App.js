@@ -31,7 +31,7 @@ function App() {
 
     const fetchTopics = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/topics', { params: { language } });
+            const response = await axios.get('https://freepdflibrary.com/topics', { params: { language } });
             setTopics(response.data);
             setTopic(response.data[0]);
         } catch (error) {
@@ -41,7 +41,7 @@ function App() {
 
     const fetchWriters = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/writers', { params: { language } });
+            const response = await axios.get('https://freepdflibrary.com/writers', { params: { language } });
             setWriters(response.data);
             setWriter(response.data[0]);
         } catch (error) {
@@ -51,7 +51,7 @@ function App() {
 
     const fetchPrayers = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/list-prayers');
+            const response = await axios.get('https://freepdflibrary.com/list-prayers');
             setPrayers(response.data.prayers);
         } catch (error) {
             console.error('Error fetching prayers:', error);
@@ -65,7 +65,7 @@ function App() {
         setTextUrl("");
 
         try {
-            const response = await axios.post('http://localhost:5000/generate-prayer', { topic, writer, language });
+            const response = await axios.post('https://freepdflibrary.com/generate-prayer', { topic, writer, language });
             setPrayer(response.data.prayer);
             setAudioUrl(response.data.audioUrl);
             setTextUrl(response.data.textUrl);
