@@ -23,7 +23,6 @@ const PrayerItem = ({
     return lines.slice(0, 3).join('\n');
   };
 
-  console.log(prayer.audioUrl)
   return (
     <div className="mb-4 p-4 border rounded-md">
       <p className="block mb-2">
