@@ -11,6 +11,7 @@ const PrayerList = ({
   handleBackgroundChange,
   downloadPoster
 }) => {
+    console.log(prayers)
   return (
     <div className="mt-6">
       <h2 className="text-lg font-bold mb-2">All Prayers:</h2>

@@ -23,6 +23,7 @@ const PrayerItem = ({
     return lines.slice(0, 3).join('\n');
   };
 
+  console.log(prayer.audioUrl)
   return (
     <div className="mb-4 p-4 border rounded-md">
       <p className="block mb-2">
@@ -34,9 +35,10 @@ const PrayerItem = ({
       >
         {expanded ? 'Show Less' : 'Show More'}
       </button>
-      <audio controls className="w-full mt-2">
+      <audio key={prayer.audioUrl} controls className="w-full mt-2">
         <source src={prayer.audioUrl} type="audio/mp3" />
-      </audio>
+    </audio>
+
       <div className="mt-4">
         <label className="block text-gray-700">Select Background:</label>
         <select

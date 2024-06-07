@@ -204,7 +204,7 @@ function App() {
       [index]: !prevState[index]
     }));
   };
-  
+
   const handleBackgroundChange = (index, value) => {
     setBackgroundsPerPrayer(prevState => ({
       ...prevState,
