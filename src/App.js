@@ -9,6 +9,12 @@ const languages = {
     "arabic": "Arabic"
 };
 
+const backgrounds = [
+    "background1.jpg",
+    "background2.jpg",
+    "background3.jpg"
+];
+
 function App() {
     const [language, setLanguage] = useState("english");
     const [topics, setTopics] = useState([]);
@@ -18,6 +24,9 @@ function App() {
     const [prayer, setPrayer] = useState("");
     const [audioUrl, setAudioUrl] = useState("");
     const [textUrl, setTextUrl] = useState("");
+    const [posterUrl, setPosterUrl] = useState("");
+    const [gifUrl, setGifUrl] = useState("");
+    const [background, setBackground] = useState(backgrounds[0]);
     const [loading, setLoading] = useState(false);
     const [prayers, setPrayers] = useState([]);
     const [filterLanguage, setFilterLanguage] = useState("");
@@ -31,7 +40,7 @@ function App() {
 
     const fetchTopics = async () => {
         try {
-            const response = await axios.get('https://freepdflibrary.com/topics', { params: { language } });
+            const response = await axios.get('http://localhost:5000/topics', { params: { language } });
             setTopics(response.data);
             setTopic(response.data[0]);
         } catch (error) {
@@ -41,7 +50,7 @@ function App() {
 
     const fetchWriters = async () => {
         try {
-            const response = await axios.get('https://freepdflibrary.com/writers', { params: { language } });
+            const response = await axios.get('http://localhost:5000/writers', { params: { language } });
             setWriters(response.data);
             setWriter(response.data[0]);
         } catch (error) {
@@ -51,7 +60,7 @@ function App() {
 
     const fetchPrayers = async () => {
         try {
-            const response = await axios.get('https://freepdflibrary.com/list-prayers');
+            const response = await axios.get('http://localhost:5000/list-prayers');
             setPrayers(response.data.prayers);
         } catch (error) {
             console.error('Error fetching prayers:', error);
@@ -63,9 +72,11 @@ function App() {
         setPrayer("");
         setAudioUrl("");
         setTextUrl("");
+        setPosterUrl("");
+        setGifUrl("");
 
         try {
-            const response = await axios.post('https://freepdflibrary.com/generate-prayer', { topic, writer, language });
+            const response = await axios.post('http://localhost:5000/generate-prayer', { topic, writer, language });
             setPrayer(response.data.prayer);
             setAudioUrl(response.data.audioUrl);
             setTextUrl(response.data.textUrl);
@@ -74,6 +85,28 @@ function App() {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const generatePoster = async (format) => {
+        if (!prayer) return;
+
+        try {
+            const response = await axios.post('http://localhost:5000/generate-poster', { text: prayer, format, background });
+            setPosterUrl(response.data.fileUrl);
+        } catch (error) {
+            console.error('Error generating poster:', error);
+        }
+    };
+
+    const generateGif = async () => {
+        if (!prayer) return;
+
+        try {
+            const response = await axios.post('http://localhost:5000/generate-gif', { text: prayer, background });
+            setGifUrl(response.data.fileUrl);
+        } catch (error) {
+            console.error('Error generating GIF:', error);
         }
     };
 
@@ -142,6 +175,18 @@ function App() {
                             ))}
                         </select>
                     </div>
+                    <div className="mb-4">
+                        <label className="block text-gray-700">Select Background:</label>
+                        <select
+                            value={background}
+                            onChange={(e) => setBackground(e.target.value)}
+                            className="block w-full mt-1 p-2 border rounded-md"
+                        >
+                            {backgrounds.map((bg) => (
+                                <option key={bg} value={bg}>{bg}</option>
+                            ))}
+                        </select>
+                    </div>
                     <button
                         onClick={generatePrayer}
                         className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700"
@@ -160,7 +205,37 @@ function App() {
                                 >
                                     Download Prayer as PDF
                                 </button>
+                                <button
+                                    onClick={() => generatePoster('png')}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 ml-2"
+                                >
+                                    Generate Poster (PNG)
+                                </button>
+                                <button
+                                    onClick={() => generatePoster('jpg')}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 ml-2"
+                                >
+                                    Generate Poster (JPG)
+                                </button>
+                                <button
+                                    onClick={generateGif}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 ml-2"
+                                >
+                                    Generate GIF
+                                </button>
                             </div>
+                            {posterUrl && (
+                                <div className="mb-4">
+                                    <h2 className="text-lg font-bold mb-2">Poster:</h2>
+                                    <img src={posterUrl} alt="Generated Poster" className="w-full" />
+                                </div>
+                            )}
+                            {gifUrl && (
+                                <div className="mb-4">
+                                    <h2 className="text-lg font-bold mb-2">GIF:</h2>
+                                    <img src={gifUrl} alt="Generated GIF" className="w-full" />
+                                </div>
+                            )}
                             <div className="mb-4">
                                 {audioUrl && (
                                     <audio controls className="w-full">
