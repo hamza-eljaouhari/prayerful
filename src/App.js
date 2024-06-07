@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import './App.css';
+import LanguageSelector from './LanguageSelector';
+import TopicSelector from './TopicSelector';
+import WriterSelector from './WriterSelector';
+import PrayerList from './PrayerList';
 
 const languages = {
   "english": "English",
@@ -26,12 +30,12 @@ function App() {
   const [prayer, setPrayer] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [textUrl, setTextUrl] = useState("");
-  const [background, setBackground] = useState(backgrounds[0]);
   const [loading, setLoading] = useState(false);
   const [prayers, setPrayers] = useState([]);
   const [filterLanguage, setFilterLanguage] = useState("");
   const [expandedPrayers, setExpandedPrayers] = useState({});
   const [dropdownOpen, setDropdownOpen] = useState({});
+  const [backgroundsPerPrayer, setBackgroundsPerPrayer] = useState({});
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -187,12 +191,6 @@ function App() {
     doc.save(`${filename}.pdf`);
   };
 
-  const getPrayerExcerpt = (text) => {
-    if (!text) return ""; // Handle undefined or empty text
-    const lines = text.split('\n');
-    return lines.slice(0, 3).join('\n');
-  };
-
   const toggleFullText = (index) => {
     setExpandedPrayers(prevState => ({
       ...prevState,
@@ -206,6 +204,13 @@ function App() {
       [index]: !prevState[index]
     }));
   };
+  
+  const handleBackgroundChange = (index, value) => {
+    setBackgroundsPerPrayer(prevState => ({
+      ...prevState,
+      [index]: value
+    }));
+  };
 
   const filteredPrayers = filterLanguage
     ? prayers.filter(prayer => prayer.textUrl.toLowerCase().includes(filterLanguage.toLowerCase()))
@@ -217,54 +222,9 @@ function App() {
         <div className="absolute inset-0 bg-gradient-to-r from-teal-400 to-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-lg"></div>
         <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-lg sm:p-20">
           <h1 className="text-2xl font-bold mb-4">Prayer Generator</h1>
-          <div className="mb-4">
-            <label className="block text-gray-700">Select Language:</label>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="block w-full mt-1 p-2 border rounded-md"
-            >
-              {Object.keys(languages).map((lang) => (
-                <option key={lang} value={lang}>{languages[lang]}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Select Topic:</label>
-            <select
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="block w-full mt-1 p-2 border rounded-md"
-            >
-              {topics.map((topic) => (
-                <option key={topic} value={topic}>{topic}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Select Writer:</label>
-            <select
-              value={writer}
-              onChange={(e) => setWriter(e.target.value)}
-              className="block w-full mt-1 p-2 border rounded-md"
-            >
-              {writers.map((writer) => (
-                <option key={writer} value={writer}>{writer}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Select Background:</label>
-            <select
-              value={background}
-              onChange={(e) => setBackground(e.target.value)}
-              className="block w-full mt-1 p-2 border rounded-md"
-            >
-              {backgrounds.map((bg) => (
-                <option key={bg} value={bg}>{bg}</option>
-              ))}
-            </select>
-          </div>
+          <LanguageSelector languages={languages} language={language} setLanguage={setLanguage} />
+          <TopicSelector topics={topics} topic={topic} setTopic={setTopic} />
+          <WriterSelector writers={writers} writer={writer} setWriter={setWriter} />
           <button
             onClick={generatePrayer}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700"
@@ -321,14 +281,14 @@ function App() {
                     >
                       <div className="py-1" role="none">
                         <button
-                          onClick={() => downloadPoster('png', background, prayer)}
+                          onClick={() => downloadPoster('png', backgroundsPerPrayer[-1] || backgrounds[0], prayer)}
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                           role="menuitem"
                         >
                           Download Poster (PNG)
                         </button>
                         <button
-                          onClick={() => downloadPoster('jpg', background, prayer)}
+                          onClick={() => downloadPoster('jpg', backgroundsPerPrayer[-1] || backgrounds[0], prayer)}
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                           role="menuitem"
                         >
@@ -350,102 +310,28 @@ function App() {
           )}
           <div className="mb-4">
             <label className="block text-gray-700">Filter by Language:</label>
-            <select
-              value={filterLanguage}
-              onChange={(e) => setFilterLanguage(e.target.value)}
-              className="block w-full mt-1 p-2 border rounded-md"
-            >
-              <option value="">All</option>
+            <div className="flex space-x-2">
               {Object.keys(languages).map((lang) => (
-                <option key={lang} value={lang}>{languages[lang]}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mt-6">
-            <h2 className="text-lg font-bold mb-2">All Prayers:</h2>
-            {filteredPrayers.map((prayer, index) => (
-              <div key={index} className="mb-4 p-4 border rounded-md">
-                <p className="block mb-2">
-                  {expandedPrayers[index] ? prayer.text : getPrayerExcerpt(prayer.text)}
-                </p>
                 <button
-                  onClick={() => toggleFullText(index)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-700"
+                  key={lang}
+                  className={`px-2 py-1 rounded-full text-white text-sm ${filterLanguage === lang ? 'bg-blue-500' : 'bg-gray-500'} hover:bg-blue-400`}
+                  onClick={() => setFilterLanguage(lang)}
                 >
-                  {expandedPrayers[index] ? 'Show Less' : 'Show More'}
+                  {lang}
                 </button>
-                <audio controls className="w-full mt-2">
-                  <source src={prayer.audioUrl} type="audio/mp3" />
-                </audio>
-                <div className="mt-4">
-                  <label className="block text-gray-700">Select Background:</label>
-                  <select
-                    value={background}
-                    onChange={(e) => setBackground(e.target.value)}
-                    className="block w-full mt-1 p-2 border rounded-md"
-                  >
-                    {backgrounds.map((bg) => (
-                      <option key={bg} value={bg}>{bg}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="relative inline-block text-left mt-2">
-                  <div>
-                    <button
-                      type="button"
-                      className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-                      id="options-menu"
-                      aria-expanded="true"
-                      aria-haspopup="true"
-                      onClick={() => toggleDropdown(index)}
-                    >
-                      Export
-                      <svg
-                        className="h-5 w-5"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 4v1m0 8v1m0 8v1m-7-9h1m8 0h1m-8 8h1m0-8h1m-8-4h1m8 0h1m-8 0h1m-8 4h1m8 0h1m0 8h1m-8 0h1"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  {dropdownOpen[index] && (
-                    <div
-                      className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                      role="menu"
-                      aria-orientation="vertical"
-                      aria-labelledby="options-menu"
-                    >
-                      <div className="py-1" role="none">
-                        <button
-                          onClick={() => downloadPoster('png', background, prayer.text)}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                          role="menuitem"
-                        >
-                          Download Poster (PNG)
-                        </button>
-                        <button
-                          onClick={() => downloadPoster('jpg', background, prayer.text)}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                          role="menuitem"
-                        >
-                          Download Poster (JPG)
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+          <PrayerList
+            prayers={filteredPrayers}
+            backgrounds={backgrounds}
+            expandedPrayers={expandedPrayers}
+            dropdownOpen={dropdownOpen}
+            toggleFullText={toggleFullText}
+            toggleDropdown={toggleDropdown}
+            handleBackgroundChange={handleBackgroundChange}
+            downloadPoster={downloadPoster}
+          />
         </div>
       </div>
     </div>
