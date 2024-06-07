@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import './App.css';
@@ -10,9 +10,11 @@ const languages = {
 };
 
 const backgrounds = [
-    "background1.jpg",
-    "background2.jpg",
-    "background3.jpg"
+    "sea.jpg",
+    "wall.jpg",
+    "fogs.jpg",
+    "moutain.jpg",
+    "sparkle.jpg"
 ];
 
 function App() {
@@ -24,13 +26,13 @@ function App() {
     const [prayer, setPrayer] = useState("");
     const [audioUrl, setAudioUrl] = useState("");
     const [textUrl, setTextUrl] = useState("");
-    const [posterUrl, setPosterUrl] = useState("");
-    const [gifUrl, setGifUrl] = useState("");
     const [background, setBackground] = useState(backgrounds[0]);
     const [loading, setLoading] = useState(false);
     const [prayers, setPrayers] = useState([]);
     const [filterLanguage, setFilterLanguage] = useState("");
     const [expandedPrayers, setExpandedPrayers] = useState({});
+    const [dropdownOpen, setDropdownOpen] = useState({});
+    const canvasRef = useRef(null);
 
     useEffect(() => {
         fetchTopics();
@@ -72,8 +74,6 @@ function App() {
         setPrayer("");
         setAudioUrl("");
         setTextUrl("");
-        setPosterUrl("");
-        setGifUrl("");
 
         try {
             const response = await axios.post('https://freepdflibrary.com/generate-prayer', { topic, writer, language });
@@ -88,26 +88,88 @@ function App() {
         }
     };
 
-    const generatePoster = async (format) => {
-        if (!prayer) return;
+    const generatePoster = (selectedBackground, selectedPrayer) => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = `${process.env.PUBLIC_URL}/backgrounds/${selectedBackground}`;
 
-        try {
-            const response = await axios.post('https://freepdflibrary.com/generate-poster', { text: prayer, format, background });
-            setPosterUrl(response.data.fileUrl);
-        } catch (error) {
-            console.error('Error generating poster:', error);
-        }
+        img.onload = () => {
+            console.log('Image loaded successfully');
+            const { width: imgWidth, height: imgHeight } = img;
+            canvas.width = imgWidth;
+            canvas.height = imgHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+
+            // Add light black overlay with 5% opacity
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Set text properties
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '30px Ubuntu';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.shadowBlur = 4;
+
+            // Calculate max width for text
+            const maxWidth = canvas.width * 0.7;
+
+            // Split text into lines
+            const lines = splitText(ctx, selectedPrayer, maxWidth);
+
+            // Calculate the starting Y position to center the text vertically
+            const lineHeight = 40; // Adjust based on font size
+            const textHeight = lines.length * lineHeight;
+            let y = (canvas.height - textHeight) / 2;
+
+            // Draw each line of text
+            lines.forEach(line => {
+                ctx.fillText(line, canvas.width / 2, y);
+                y += lineHeight;
+            });
+        };
+
+        img.onerror = () => {
+            console.error('Error loading image');
+        };
     };
 
-    const generateGif = async () => {
-        if (!prayer) return;
+    const splitText = (ctx, text, maxWidth) => {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = words[0];
 
-        try {
-            const response = await axios.post('https://freepdflibrary.com/generate-gif', { text: prayer, background });
-            setGifUrl(response.data.fileUrl);
-        } catch (error) {
-            console.error('Error generating GIF:', error);
+        for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const width = ctx.measureText(currentLine + ' ' + word).width;
+            if (width < maxWidth) {
+                currentLine += ' ' + word;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
         }
+        lines.push(currentLine);
+        return lines;
+    };
+
+    const downloadPoster = (format, selectedBackground, selectedPrayer) => {
+        generatePoster(selectedBackground, selectedPrayer);
+        const canvas = canvasRef.current;
+        setTimeout(() => {
+            canvas.toBlob((blob) => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `poster.${format}`;
+                link.click();
+            }, `image/${format}`);
+        }, 1000); // Delay to ensure the image is drawn
     };
 
     const downloadPDF = (text, filename) => {
@@ -124,6 +186,13 @@ function App() {
 
     const toggleFullText = (index) => {
         setExpandedPrayers(prevState => ({
+            ...prevState,
+            [index]: !prevState[index]
+        }));
+    };
+
+    const toggleDropdown = (index) => {
+        setDropdownOpen(prevState => ({
             ...prevState,
             [index]: !prevState[index]
         }));
@@ -198,44 +267,69 @@ function App() {
                         <div className="mt-6">
                             <h2 className="text-lg font-bold mb-2">Prayer:</h2>
                             <p className="mb-4">{prayer}</p>
-                            <div className="mb-4">
+                            <div className="mb-4 flex">
                                 <button
                                     onClick={() => downloadPDF(prayer, `prayer-${topic}-${language}`)}
                                     className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-700"
                                 >
                                     Download Prayer as PDF
                                 </button>
-                                <button
-                                    onClick={() => generatePoster('png')}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 ml-2"
-                                >
-                                    Generate Poster (PNG)
-                                </button>
-                                <button
-                                    onClick={() => generatePoster('jpg')}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 ml-2"
-                                >
-                                    Generate Poster (JPG)
-                                </button>
-                                <button
-                                    onClick={generateGif}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 ml-2"
-                                >
-                                    Generate GIF
-                                </button>
+                                <div className="relative inline-block text-left ml-2">
+                                    <div>
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                                            id="options-menu"
+                                            aria-expanded="true"
+                                            aria-haspopup="true"
+                                            onClick={() => toggleDropdown(-1)}
+                                        >
+                                          Export
+                                            <svg
+                                                className="h-5 w-5"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                aria-hidden="true"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    d="M12 4v1m0 8v1m0 8v1m-7-9h1m8 0h1m-8 8h1m0-8h1m-8-4h1m8 0h1m-8 0h1m-8 4h1m8 0h1m0 8h1m-8 0h1"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    {dropdownOpen[-1] && (
+                                        <div
+                                            className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                                            role="menu"
+                                            aria-orientation="vertical"
+                                            aria-labelledby="options-menu"
+                                        >
+                                            <div className="py-1" role="none">
+                                                <button
+                                                    onClick={() => downloadPoster('png', background, prayer)}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                                    role="menuitem"
+                                                >
+                                                    Download Poster (PNG)
+                                                </button>
+                                                <button
+                                                    onClick={() => downloadPoster('jpg', background, prayer)}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                                    role="menuitem"
+                                                >
+                                                    Download Poster (JPG)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            {posterUrl && (
-                                <div className="mb-4">
-                                    <h2 className="text-lg font-bold mb-2">Poster:</h2>
-                                    <img src={posterUrl} alt="Generated Poster" className="w-full" />
-                                </div>
-                            )}
-                            {gifUrl && (
-                                <div className="mb-4">
-                                    <h2 className="text-lg font-bold mb-2">GIF:</h2>
-                                    <img src={gifUrl} alt="Generated GIF" className="w-full" />
-                                </div>
-                            )}
+                            <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
                             <div className="mb-4">
                                 {audioUrl && (
                                     <audio controls className="w-full">
@@ -274,12 +368,72 @@ function App() {
                                 <audio controls className="w-full mt-2">
                                     <source src={prayer.audioUrl} type="audio/mp3" />
                                 </audio>
-                                <button
-                                    onClick={() => downloadPDF(prayer.text, `prayer-${index + 1}-${language}`)}
-                                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-700 mt-2"
-                                >
-                                    Download as PDF
-                                </button>
+                                <div className="mt-4">
+                                    <label className="block text-gray-700">Select Background:</label>
+                                    <select
+                                        value={background}
+                                        onChange={(e) => setBackground(e.target.value)}
+                                        className="block w-full mt-1 p-2 border rounded-md"
+                                    >
+                                        {backgrounds.map((bg) => (
+                                            <option key={bg} value={bg}>{bg}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="relative inline-block text-left mt-2">
+                                    <div>
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                                            id="options-menu"
+                                            aria-expanded="true"
+                                            aria-haspopup="true"
+                                            onClick={() => toggleDropdown(index)}
+                                        >
+                                          Export
+                                            <svg
+                                                className="h-5 w-5"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                aria-hidden="true"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    d="M12 4v1m0 8v1m0 8v1m-7-9h1m8 0h1m-8 8h1m0-8h1m-8-4h1m8 0h1m-8 0h1m-8 4h1m8 0h1m0 8h1m-8 0h1"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    {dropdownOpen[index] && (
+                                        <div
+                                            className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                                            role="menu"
+                                            aria-orientation="vertical"
+                                            aria-labelledby="options-menu"
+                                        >
+                                            <div className="py-1" role="none">
+                                                <button
+                                                    onClick={() => downloadPoster('png', background, prayer.text)}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                                    role="menuitem"
+                                                >
+                                                    Download Poster (PNG)
+                                                </button>
+                                                <button
+                                                    onClick={() => downloadPoster('jpg', background, prayer.text)}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                                    role="menuitem"
+                                                >
+                                                    Download Poster (JPG)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
