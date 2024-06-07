@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/prayerful/static/css/main.f1a1ef1f.css",
-    "main.js": "/prayerful/static/js/main.3d44b8df.js",
+    "main.js": "/prayerful/static/js/main.52c7e7d9.js",
     "static/js/239.4bc3f872.chunk.js": "/prayerful/static/js/239.4bc3f872.chunk.js",
     "static/js/213.615603c4.chunk.js": "/prayerful/static/js/213.615603c4.chunk.js",
     "static/js/732.3c399cea.chunk.js": "/prayerful/static/js/732.3c399cea.chunk.js",
     "static/js/453.ebff4cd8.chunk.js": "/prayerful/static/js/453.ebff4cd8.chunk.js",
     "index.html": "/prayerful/index.html",
     "main.f1a1ef1f.css.map": "/prayerful/static/css/main.f1a1ef1f.css.map",
-    "main.3d44b8df.js.map": "/prayerful/static/js/main.3d44b8df.js.map",
+    "main.52c7e7d9.js.map": "/prayerful/static/js/main.52c7e7d9.js.map",
     "239.4bc3f872.chunk.js.map": "/prayerful/static/js/239.4bc3f872.chunk.js.map",
     "213.615603c4.chunk.js.map": "/prayerful/static/js/213.615603c4.chunk.js.map",
     "732.3c399cea.chunk.js.map": "/prayerful/static/js/732.3c399cea.chunk.js.map",
@@ -16,6 +16,6 @@
   },
   "entrypoints": [
     "static/css/main.f1a1ef1f.css",
-    "static/js/main.3d44b8df.js"
+    "static/js/main.52c7e7d9.js"
   ]
 }
