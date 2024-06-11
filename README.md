@@ -82,4 +82,3 @@ For any questions or support, please open an issue on the repository or contact 
 ---
 
 Thank you for exploring the Prayerful project. We hope it provides meaningful support and guidance to its users. Stay tuned for updates as we continue to develop and enhance this project.
-```
